@@ -46,7 +46,42 @@ No outputs.
 <!-- END_TF_DOCS -->
 
 
-## sample AWS CLI inserts into kinesis stream
+## Testing
+
+### Send a single test record to Kinesis stream
+
+```bash
+aws kinesis put-record \
+  --stream-name app-logs-stream \
+  --partition-key "test-uuid" \
+  --data '{
+    "timestamp": "2024-12-10T15:30:45.123Z",
+    "uuid": "123e4567-e89b-12d3-a456-426614174000",
+    "level": "INFO",
+    "logger": "test-logger",
+    "traceid": "trace-123",
+    "request": {
+      "method": "POST",
+      "path": "/api/test",
+      "headers": {},
+      "body": "",
+      "ipaddress": "127.0.0.1"
+    },
+    "response": {
+      "statuscode": 200,
+      "headers": {},
+      "body": "",
+      "durationms": 100
+    },
+    "environment": "production",
+    "servicename": "test-service"
+  }' \
+  --cli-binary-format raw-in-base64-out
+```
+
+### Send multiple test records
+
+```bash
 for i in {1..10}; do
   aws kinesis put-record \
     --stream-name app-logs-stream \
@@ -54,3 +89,24 @@ for i in {1..10}; do
     --data '{"timestamp":"2024-12-10T15:30:45.123Z","uuid":"123e4567-e89b-12d3-a456-42661417400'$i'","level":"INFO","logger":"test-logger","traceid":"trace-'$i'","request":{"method":"POST","path":"/api/test","headers":{},"body":"","ipaddress":"127.0.0.1"},"response":{"statuscode":200,"headers":{},"body":"","durationms":100},"environment":"production","servicename":"test-service"}' \
     --cli-binary-format raw-in-base64-out
 done
+```
+
+### Query with Athena
+
+Wait 5 minutes for Firehose buffering, then query in Athena console using the `app-logs-workgroup`:
+
+```sql
+SELECT *
+FROM request_response_logs
+WHERE year = 2024 AND month = 12 AND day = 10
+LIMIT 10;
+```
+
+Search by UUID:
+```sql
+SELECT *
+FROM request_response_logs
+WHERE year = 2024 AND month = 12 AND day = 10
+  AND uuid LIKE '123e4567%'
+LIMIT 10;
+```
