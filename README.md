@@ -44,3 +44,13 @@ No modules.
 
 No outputs.
 <!-- END_TF_DOCS -->
+
+
+## sample AWS CLI inserts into kinesis stream
+for i in {1..10}; do
+  aws kinesis put-record \
+    --stream-name app-logs-stream \
+    --partition-key "test-uuid-$i" \
+    --data '{"timestamp":"2024-12-10T15:30:45.123Z","uuid":"123e4567-e89b-12d3-a456-42661417400'$i'","level":"INFO","logger":"test-logger","traceid":"trace-'$i'","request":{"method":"POST","path":"/api/test","headers":{},"body":"","ipaddress":"127.0.0.1"},"response":{"statuscode":200,"headers":{},"body":"","durationms":100},"environment":"production","servicename":"test-service"}' \
+    --cli-binary-format raw-in-base64-out
+done
